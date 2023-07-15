@@ -49,6 +49,27 @@ const TeamType = new GraphQLObjectType({
     managerId: {
       type: new GraphQLNonNull(GraphQLInt),
     },
+    manager: {
+      type: managerType,
+      resolve: (team) => {
+        return managers.find((manager) => manager.id === team.managerId);
+      },
+    },
+  }),
+});
+
+const managerType = new GraphQLObjectType({
+  name: "Manager",
+  description: "managers' name",
+  fields: () => ({
+    id: { type: new GraphQLNonNull(GraphQLInt) },
+    name: { type: new GraphQLNonNull(GraphQLString) },
+    teams: {
+      type: new GraphQLList(TeamType),
+      resolve: (manager) => {
+        return teams.filter((team) => team.managerId === manager.id);
+      },
+    },
   }),
 });
 
@@ -56,16 +77,65 @@ const RootQueryType = new GraphQLObjectType({
   name: "Query",
   description: "Root Query",
   fields: () => ({
+    team: {
+      type: TeamType,
+      description: "query for every single team on each",
+      args: {
+        id: { type: GraphQLNonNull(GraphQLInt) },
+      },
+      resolve: (parent, args) => {
+        return teams.find((team) => team.id === args.id);
+      },
+    },
     teams: {
       type: new GraphQLList(TeamType),
       description: "List of all teams",
       resolve: () => teams,
+    },
+    managers: {
+      type: new GraphQLList(managerType),
+      description: "List of all managers",
+      resolve: () => managers,
+    },
+    manager: {
+      type: new GraphQLList(managerType),
+      description: "a query for a single manager",
+      args: {
+        id: { type: GraphQLNonNull(GraphQLInt) },
+      },
+      resolve: (parent, args) =>
+        managers.find((manager) => manager.id === args.id),
+    },
+  }),
+});
+
+const RootMutationType = new GraphQLObjectType({
+  name: "Mutation",
+  description: "Root Mutation",
+  fields: () => ({
+    addTeam: {
+      type: TeamType,
+      description: "add a team",
+      args: {
+        name: { type: GraphQLNonNull(GraphQLString) },
+        managerId: { type: GraphQLNonNull(GraphQLInt) },
+      },
+      resolve: (parent, args) => {
+        const team = {
+          id: teams.length + 1,
+          name: args.name,
+          managerId: args.managerId,
+        };
+        teams.push(team);
+        return team;
+      },
     },
   }),
 });
 
 const schema = new GraphQLSchema({
   query: RootQueryType,
+  mutation: RootMutationType,
 });
 
 app.use(
