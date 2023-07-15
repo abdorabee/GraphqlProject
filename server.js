@@ -130,6 +130,21 @@ const RootMutationType = new GraphQLObjectType({
         return team;
       },
     },
+    addManager: {
+      type: managerType,
+      description: "Add a manager",
+      args: {
+        name: { type: GraphQLNonNull(GraphQLString) },
+      },
+      resolve: (parent, args) => {
+        const manager = {
+          id: managers.length + 1,
+          name: args.name,
+        };
+        managers.push(manager);
+        return manager;
+      },
+    },
   }),
 });
 
