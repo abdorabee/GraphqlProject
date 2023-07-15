@@ -9,6 +9,33 @@ const {
   GraphQLInt,
   GraphQLNonNull,
 } = require("graphql");
+const mongoose = require("mongoose");
+
+// Connect to MongoDB
+mongoose
+  .connect("mongodb://localhost/Cluster1", {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+  })
+  .then(() => {
+    console.log("Connected to MongoDB");
+  })
+  .catch((error) => {
+    console.error("Error connecting to MongoDB:", error);
+  });
+
+const teamSchema = new mongoose.Schema({
+  name: { type: String, required: true },
+  managerId: { type: Number, required: true },
+});
+
+const Team = mongoose.model("Team", teamSchema);
+
+const managerSchema = new mongoose.Schema({
+  name: { type: String, required: true },
+});
+
+const Manager = mongoose.model("Manager", managerSchema);
 
 const teams = [
   { id: 1, name: "Manchester United", managerId: 1 },
