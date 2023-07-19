@@ -9,33 +9,8 @@ const {
   GraphQLInt,
   GraphQLNonNull,
 } = require("graphql");
-const mongoose = require("mongoose");
-
-// Connect to MongoDB
-mongoose
-  .connect("mongodb://localhost/Cluster1", {
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
-  })
-  .then(() => {
-    console.log("Connected to MongoDB");
-  })
-  .catch((error) => {
-    console.error("Error connecting to MongoDB:", error);
-  });
-
-const teamSchema = new mongoose.Schema({
-  name: { type: String, required: true },
-  managerId: { type: Number, required: true },
-});
-
-const Team = mongoose.model("Team", teamSchema);
-
-const managerSchema = new mongoose.Schema({
-  name: { type: String, required: true },
-});
-
-const Manager = mongoose.model("Manager", managerSchema);
+const { PrismaClient } = require("@prisma/client");
+const prisma = new PrismaClient();
 
 const teams = [
   { id: 1, name: "Manchester United", managerId: 1 },
@@ -142,18 +117,19 @@ const RootMutationType = new GraphQLObjectType({
   fields: () => ({
     addTeam: {
       type: TeamType,
-      description: "add a team",
+      description: "Add a team",
       args: {
         name: { type: GraphQLNonNull(GraphQLString) },
         managerId: { type: GraphQLNonNull(GraphQLInt) },
       },
-      resolve: (parent, args) => {
-        const team = {
-          id: teams.length + 1,
-          name: args.name,
-          managerId: args.managerId,
-        };
-        teams.push(team);
+      resolve: async (_, args) => {
+        const { name, managerId } = args;
+        const team = await prisma.team.create({
+          data: {
+            name,
+            managerId,
+          },
+        });
         return team;
       },
     },
@@ -163,12 +139,13 @@ const RootMutationType = new GraphQLObjectType({
       args: {
         name: { type: GraphQLNonNull(GraphQLString) },
       },
-      resolve: (parent, args) => {
-        const manager = {
-          id: managers.length + 1,
-          name: args.name,
-        };
-        managers.push(manager);
+      resolve: async (_, args) => {
+        const { name } = args;
+        const manager = await prisma.manager.create({
+          data: {
+            name,
+          },
+        });
         return manager;
       },
     },
